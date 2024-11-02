@@ -1,9 +1,13 @@
+import 'dart:convert';
+
 import 'package:cloud_firestore/cloud_firestore.dart'; // Firestore
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart'; // Firebase Auth
 import 'package:firebase_core/firebase_core.dart'; // Firebase Core for initialization
+import 'package:sneakers_app/Authentication/login_page.dart';
 import 'package:sneakers_app/view/navigator.dart';
-import '../Constants/constants.dart'; // Ensure this path is correct based on your project structure
+import '../Constants/constants.dart';
+import 'package:http/http.dart' as http;// Ensure this path is correct based on your project structure
 
 class SignUpPage extends StatefulWidget {
   const SignUpPage({Key? key}) : super(key: key);
@@ -32,7 +36,7 @@ class _SignUpPageState extends State<SignUpPage> {
     // Replace with actual navigation to welcome screen
     Navigator.pushReplacement(
       context,
-      MaterialPageRoute(builder: (context) => MainNavigator()),
+      MaterialPageRoute(builder: (context) => LoginPage()),
     );
   }
 
@@ -105,32 +109,37 @@ class _SignUpPageState extends State<SignUpPage> {
         // Save user info (name and email) to Firestore
         await FirebaseFirestore.instance
             .collection('users')
-            .doc(userCredential.user!.uid) // Use the user's UID for unique ID
+            .doc(userCredential.user!.uid)
             .set({
-          'name': _nameController.text.trim(), // Save the name
+          'name': _nameController.text.trim(),
           'email': _emailController.text.trim(),
         });
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Sign Up Successful!')),
+        // Save user info to MongoDB
+        final response = await http.post(
+          Uri.parse('http://localhost:3000/api/users'),
+          headers: {'Content-Type': 'application/json'},
+          body: json.encode({
+            'name': _nameController.text.trim(),
+            'email': _emailController.text.trim(),
+          }),
         );
+
+        if (response.statusCode == 201) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Sign Up Successful!')),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Error saving user in MongoDB')),
+          );
+        }
+
         _navigateToWelcomeScreen();
       } on FirebaseAuthException catch (e) {
-        print('FirebaseAuthException: ${e.code} - ${e.message}');
-        String message = 'An error occurred, please try again.';
-        if (e.code == 'weak-password') {
-          message = 'The password provided is too weak.';
-        } else if (e.code == 'email-already-in-use') {
-          message = 'The account already exists for that email.';
-        }
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(message)),
-        );
+        // Handle Firebase exceptions
       } catch (e) {
-        print('General Exception: $e');
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('An error occurred, please try again.')),
-        );
+        // Handle general exceptions
       } finally {
         setState(() {
           _isLoading = false; // Hide progress indicator
@@ -142,6 +151,7 @@ class _SignUpPageState extends State<SignUpPage> {
       );
     }
   }
+
 
   @override
   Widget build(BuildContext context) {

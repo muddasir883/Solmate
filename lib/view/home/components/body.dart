@@ -8,6 +8,7 @@ import '../../../utils/constants.dart';
 import '../../../models/shoe_model.dart';
 import '../../detail/detail_screen.dart';
 import '../../../data/dummy_data.dart';
+import 'app_bar.dart';
 
 class Body extends StatefulWidget {
   const Body({Key? key}) : super(key: key);
@@ -19,22 +20,92 @@ class Body extends StatefulWidget {
 class _BodyState extends State<Body> {
   int selectedIndexOfCategory = 0;
   int selectedIndexOfFeatured = 1;
+  bool isSearching = false;
+  TextEditingController searchController = TextEditingController();
+  List<ShoeModel> filteredShoes = availableShoes; // Initially shows all shoes
+
+  // Categories for filtering
+  List<String> categories = ["NIKE", "ADIDAS", "JORDAN", "PUMA"];
+
+  // Method to filter shoes based on selected category
+  void filterShoesByCategory(String category) {
+    setState(() {
+      filteredShoes = availableShoes.where((shoe) => shoe.name == category).toList();
+    });
+  }
+
+  void toggleSearch() {
+    setState(() {
+      isSearching = !isSearching;
+      if (!isSearching) {
+        searchController.clear();
+        filteredShoes = availableShoes; // Reset filtered list when search is canceled
+      }
+    });
+  }
+
+  void onSearchChanged(String query) {
+    setState(() {
+      filteredShoes = availableShoes.where((shoe) {
+        final nameLower = shoe.name.toLowerCase();
+        final modelLower = shoe.model.toLowerCase();
+        final queryLower = query.toLowerCase();
+        return nameLower.contains(queryLower) || modelLower.contains(queryLower);
+      }).toList();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     final width = MediaQuery.of(context).size.width;
     final height = MediaQuery.of(context).size.height;
-
-    return SingleChildScrollView(
-      child: Column(
-        children: [
-          topCategoriesWidget(width, height),
-          SizedBox(height: height * 0.01), // Responsive spacing
-          middleCategoriesWidget(width, height),
-          SizedBox(height: height * 0.005), // Responsive spacing
-          moreTextWidget(),
-          lastCategoriesWidget(width, height),
-        ],
+    return Scaffold(
+      appBar: customAppBar(
+        isSearching: isSearching,
+        toggleSearch: toggleSearch,
+        searchController: searchController,
+        onSearchChanged: onSearchChanged,
+      ),
+      body: SingleChildScrollView(
+        child: Column(
+          children: [
+            if (isSearching)
+              ListView.builder(
+                shrinkWrap: true,
+                itemCount: filteredShoes.length,
+                itemBuilder: (ctx, index) {
+                  ShoeModel shoe = filteredShoes[index];
+                  return ListTile(
+                    title: Text(shoe.name),
+                    subtitle: Text(shoe.model),
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (ctx) => DetailScreen(
+                            model: shoe,
+                            isComeFromMoreSection: false,
+                          ),
+                        ),
+                      );
+                    },
+                  );
+                },
+              )
+            else
+              Column(
+                children: [
+                  topCategoriesWidget(width, height),
+                  SizedBox(height: height * 0.01),
+                  // Display filtered shoes based on selected category
+                  middleCategoriesWidget(width, height),
+                  SizedBox(height: height * 0.005),
+                  moreTextWidget(),
+                  lastCategoriesWidget(width, height),
+                ],
+              ),
+          ],
+        ),
       ),
     );
   }
@@ -52,6 +123,7 @@ class _BodyState extends State<Body> {
             onTap: () {
               setState(() {
                 selectedIndexOfCategory = index;
+                filterShoesByCategory(categories[index]); // Filter shoes by selected category
               });
             },
             child: Padding(
@@ -121,9 +193,9 @@ class _BodyState extends State<Body> {
           child: ListView.builder(
             physics: const BouncingScrollPhysics(),
             scrollDirection: Axis.horizontal,
-            itemCount: availableShoes.length,
+            itemCount: filteredShoes.length, // Use filteredShoes here
             itemBuilder: (ctx, index) {
-              ShoeModel model = availableShoes[index];
+              ShoeModel model = filteredShoes[index];
               return GestureDetector(
                 onTap: () {
                   Navigator.push(
@@ -255,10 +327,10 @@ class _BodyState extends State<Body> {
       height: height * 0.25,
       child: ListView.builder(
         physics: const BouncingScrollPhysics(),
-        itemCount: availableShoes.length,
+        itemCount: filteredShoes.length, // Use filteredShoes here
         scrollDirection: Axis.horizontal,
         itemBuilder: (ctx, index) {
-          ShoeModel model = availableShoes[index];
+          ShoeModel model = filteredShoes[index];
           return GestureDetector(
             onTap: () {
               Navigator.push(
@@ -266,81 +338,42 @@ class _BodyState extends State<Body> {
                 MaterialPageRoute(
                   builder: (ctx) => DetailScreen(
                     model: model,
-                    isComeFromMoreSection: true,
+                    isComeFromMoreSection: false,
                   ),
                 ),
               );
             },
             child: Container(
-              margin: EdgeInsets.all(width * 0.03),
-              width: width * 0.45,
+              width: width * 0.35,
+              margin: EdgeInsets.all(width * 0.02),
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(width * 0.03),
-                color: Colors.white,
+                color: model.modelColor,
+                borderRadius: BorderRadius.circular(width * 0.06),
               ),
               child: Stack(
                 children: [
                   Positioned(
-                    left: width * 0.015,
-                    child: FadeAnimation(
-                      delay: 1,
-                      child: Container(
-                        width: width * 0.07,
-                        height: height * 0.1,
-                        color: Colors.red,
-                        child: RotatedBox(
-                          quarterTurns: -1,
-                          child: Center(
-                            child: FadeAnimation(
-                              delay: 1.5,
-                              child: Text("NEW", style: AppThemes.homeGridNewText),
-                            ),
-                          ),
-                        ),
+                    left: width * 0.02,
+                    top: height * 0.02,
+                    child: SizedBox(
+                      width: width * 0.25,
+                      height: height * 0.1,
+                      child: Image.asset(
+                        model.imgAddress,
+                        fit: BoxFit.cover,
                       ),
                     ),
                   ),
                   Positioned(
-                    left: width * 0.35,
-                    child: IconButton(
-                      onPressed: () {},
-                      icon: Icon(
-                        Icons.favorite_border,
-                        color: AppConstantsColor.darkTextColor,
-                      ),
-                    ),
-                  ),
-                  Positioned(
-                    top: height * 0.05,
-                    left: width * 0.06,
-                    child: FadeAnimation(
-                      delay: 1.5,
-                      child: Hero(
-                        tag: model.imgAddress,
-                        child: SizedBox(
-                          width: width * 0.3,
-                          height: height * 0.15,
-                          child: Image(
-                            image: AssetImage(model.imgAddress),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                  Positioned(
-                    top: height * 0.15,
-                    left: width * 0.06,
-                    child: FadeAnimation(
-                      delay: 2,
-                      child: Text(model.name, style: AppThemes.homeProductName),
-                    ),
-                  ),
-                  Positioned(
-                    top: height * 0.19,
-                    left: width * 0.06,
-                    child: FadeAnimation(
-                      delay: 2.5,
-                      child: Text("\$${model.price.toStringAsFixed(2)}", style: AppThemes.homeGridPrice),
+                    top: height * 0.13,
+                    left: width * 0.04,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(model.name, style: AppThemes.homeProductName),
+                        SizedBox(height: height * 0.005),
+                        Text("\$${model.price.toStringAsFixed(2)}", style: AppThemes.homeProductPrice),
+                      ],
                     ),
                   ),
                 ],
@@ -352,3 +385,4 @@ class _BodyState extends State<Body> {
     );
   }
 }
+

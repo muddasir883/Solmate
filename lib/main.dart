@@ -3,6 +3,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:get/get_navigation/src/root/get_material_app.dart';
+import 'package:sneakers_app/view/profile/profile_screen.dart';
 import 'Authentication/login_page.dart';
 import 'firebase_options.dart';
 
@@ -27,7 +28,7 @@ class MyApp extends StatelessWidget {
       ),
       title: 'Sneakers Shop App',
       home:
-      //Profile()
+      // Profile()
       //HomeScreen()
       // SignUpPage()
        LoginPage()

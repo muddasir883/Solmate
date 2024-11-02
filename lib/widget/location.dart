@@ -7,12 +7,10 @@ class LocationScreen extends StatefulWidget {
 }
 
 class _LocationScreenState extends State<LocationScreen> {
-  // Coordinates for the specific location
   static const LatLng _storeLocation = LatLng(37.7749, -122.4194); // Example: San Francisco
 
   late GoogleMapController _mapController;
 
-  // Initialize the Google Map controller
   void _onMapCreated(GoogleMapController controller) {
     _mapController = controller;
   }
@@ -27,12 +25,11 @@ class _LocationScreenState extends State<LocationScreen> {
       ),
       body: Stack(
         children: [
-          // Displaying Google Map centered on the store location
           GoogleMap(
             onMapCreated: _onMapCreated,
             initialCameraPosition: CameraPosition(
               target: _storeLocation,
-              zoom: 15, // Adjust zoom level to focus on the location
+              zoom: 15,
             ),
             markers: {
               Marker(
@@ -43,7 +40,6 @@ class _LocationScreenState extends State<LocationScreen> {
               ),
             },
           ),
-          // Adding a custom location icon at the center
           Center(
             child: Icon(
               Icons.location_on,

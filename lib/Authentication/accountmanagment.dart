@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
-import '../../utils/constants.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class AccountManagementScreen extends StatefulWidget {
   @override
@@ -10,30 +10,112 @@ class AccountManagementScreen extends StatefulWidget {
 class _AccountManagementScreenState extends State<AccountManagementScreen> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _nameController = TextEditingController();
-  final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
 
-  // Validation and Submission Method
-  void _validateAndSubmit(BuildContext context) {
-    if (_formKey.currentState!.validate()) {
-      showDialog(
-        context: context,
-        builder: (context) {
-          return AlertDialog(
-            title: Text('Account Updated'),
-            content: Text('Your account information has been updated successfully.'),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  Navigator.of(context).pop(); // Close the dialog
-                },
-                child: Text('OK'),
-              ),
-            ],
-          );
-        },
-      );
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserData();
+  }
+
+  // Load the current user's data
+  void _loadUserData() async {
+    final user = _auth.currentUser;
+    if (user != null) {
+      final doc = await _firestore.collection('users').doc(user.uid).get();
+      setState(() {
+        _nameController.text = doc['name'] ?? '';
+      });
     }
+  }
+
+  // Method to validate and update user data in Firestore
+  void _validateAndSubmit(BuildContext context) async {
+    if (_formKey.currentState!.validate()) {
+      final user = _auth.currentUser; // Get the current user here
+      if (user != null) {
+        // Show a dialog to enter password
+        await _promptPassword(context, user);
+      }
+    }
+  }
+
+  // Method to prompt for password and reauthenticate
+  Future<void> _promptPassword(BuildContext context, User user) async {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text('Verify Password'),
+          content: TextFormField(
+            controller: _passwordController,
+            decoration: InputDecoration(labelText: 'Password'),
+            obscureText: true,
+          ),
+          actions: [
+            TextButton(
+              onPressed: () async {
+                Navigator.of(context).pop(); // Close dialog
+                final password = _passwordController.text;
+                if (password.isNotEmpty) {
+                  try {
+                    // Reauthenticate user
+                    final authCredential = EmailAuthProvider.credential(
+                      email: user.email!,
+                      password: password,
+                    );
+                    await user.reauthenticateWithCredential(authCredential);
+
+                    // Update name in Firestore
+                    await _firestore.collection('users').doc(user.uid).update({
+                      'name': _nameController.text,
+                    });
+
+                    // Show success dialog
+                    _showDialog(
+                      context,
+                      'Account Updated',
+                      'Your account information has been updated successfully.',
+                    );
+                  } catch (e) {
+                    _showDialog(
+                      context,
+                      'Error',
+                      'Failed to update account: ${e.toString()}',
+                    );
+                  }
+                }
+              },
+              child: Text('Submit'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  // Helper method to show dialog messages
+  void _showDialog(BuildContext context, String title, String message) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text(title),
+          content: Text(message),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(); // Close the dialog
+              },
+              child: Text('OK'),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override
@@ -54,7 +136,7 @@ class _AccountManagementScreenState extends State<AccountManagementScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Name
+                // Editable Name field
                 TextFormField(
                   controller: _nameController,
                   decoration: InputDecoration(
@@ -71,49 +153,9 @@ class _AccountManagementScreenState extends State<AccountManagementScreen> {
                     return null;
                   },
                 ),
-                SizedBox(height: 16),
-
-                // Email
-                TextFormField(
-                  controller: _emailController,
-                  decoration: InputDecoration(
-                    labelText: 'Email',
-                    labelStyle: TextStyle(color: Colors.grey),
-                    focusedBorder: UnderlineInputBorder(
-                      borderSide: BorderSide(color: Colors.blueAccent),
-                    ),
-                  ),
-                  keyboardType: TextInputType.emailAddress,
-                  validator: (value) {
-                    if (value == null || value.isEmpty || !value.contains('@')) {
-                      return 'Please enter a valid email';
-                    }
-                    return null;
-                  },
-                ),
-                SizedBox(height: 16),
-
-                // Password
-                TextFormField(
-                  controller: _passwordController,
-                  decoration: InputDecoration(
-                    labelText: 'Password',
-                    labelStyle: TextStyle(color: Colors.grey),
-                    focusedBorder: UnderlineInputBorder(
-                      borderSide: BorderSide(color: Colors.blueAccent),
-                    ),
-                  ),
-                  obscureText: true,
-                  validator: (value) {
-                    if (value == null || value.isEmpty || value.length < 6) {
-                      return 'Please enter a password with at least 6 characters';
-                    }
-                    return null;
-                  },
-                ),
                 SizedBox(height: 30),
 
-                // Submit Button
+                // Save Changes Button
                 Center(
                   child: MaterialButton(
                     shape: RoundedRectangleBorder(
@@ -121,7 +163,7 @@ class _AccountManagementScreenState extends State<AccountManagementScreen> {
                     ),
                     minWidth: width / 1.2,
                     height: height / 15,
-                    color: AppConstantsColor.materialButtonColor,
+                    color: Colors.blueAccent,
                     onPressed: () {
                       _validateAndSubmit(context);
                     },

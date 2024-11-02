@@ -59,7 +59,82 @@ final List<ShoeModel> availableShoes = [
     imgAddress: "assets/images/nike6.png",
     modelColor: const Color(0xffE2E3E5),
   ),
+  // Adidas Models
+  ShoeModel(
+    name: "ADIDAS",
+    model: "ULTRABOOST",
+    price: 180.00,
+    imgAddress: "assets/images/adidas1.png",
+    modelColor: const Color(0xffE5E5E5),
+  ),
+  ShoeModel(
+    name: "ADIDAS",
+    model: "NMD_R1",
+    price: 140.00,
+    imgAddress: "assets/images/adidas2.png",
+    modelColor: const Color(0xff000000),
+  ),
+  ShoeModel(
+    name: "ADIDAS",
+    model: "SUPERSTAR",
+    price: 90.00,
+    imgAddress: "assets/images/adidas3.png",
+    modelColor: const Color(0xffFFFFFF),
+  ),
+  // Jordan Models
+  ShoeModel(
+    name: "JORDAN",
+    model: "AIR JORDAN 1",
+    price: 200.00,
+    imgAddress: "assets/images/jordan1.png",
+    modelColor: const Color(0xffB63A47),
+  ),
+  ShoeModel(
+    name: "JORDAN",
+    model: "JORDAN DELTA",
+    price: 150.00,
+    imgAddress: "assets/images/jordan2.png",
+    modelColor: const Color(0xff42424E),
+  ),
+  // Puma Models
+  ShoeModel(
+    name: "PUMA",
+    model: "RS-X",
+    price: 120.00,
+    imgAddress: "assets/images/puma1.png",
+    modelColor: const Color(0xff212121),
+  ),
+  ShoeModel(
+    name: "PUMA",
+    model: "SUEDE CLASSIC",
+    price: 85.00,
+    imgAddress: "assets/images/puma2.png",
+    modelColor: const Color(0xff8B4513),
+  ),
+  ShoeModel(
+    name: "PUMA",
+    model: "FUTURE RIDER",
+    price: 100.00,
+    imgAddress: "assets/images/puma3.png",
+    modelColor: const Color(0xffEB5757),
+  ),
+  // Gucci Models
+  ShoeModel(
+    name: "GUCCI",
+    model: "ACE SNEAKER",
+    price: 580.00,
+    imgAddress: "assets/images/gucci1.png",
+    modelColor: const Color(0xffD4AF37),
+  ),
+  ShoeModel(
+    name: "GUCCI",
+    model: "RHYTON SNEAKER",
+    price: 690.00,
+    imgAddress: "assets/images/gucci2.png",
+    modelColor: const Color(0xffB0C4DE),
+  ),
 ];
+
 
 List<ShoeModel> itemsOnBag = [];
 
@@ -96,8 +171,7 @@ final List categories = [
   'Jordan',
   'Puma',
   'Gucci',
-  'Tom Ford',
-  'Koio',
+
 ];
 final List featured = [
   'New',
