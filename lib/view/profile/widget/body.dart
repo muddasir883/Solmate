@@ -1,8 +1,11 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:get/get_core/src/get_main.dart';
 import 'package:sneakers_app/Authentication/accountmanagment.dart';
 import 'package:sneakers_app/theme/custom_app_theme.dart';
 import 'package:firebase_auth/firebase_auth.dart'; // Import Firebase Authentication
+import 'package:sneakers_app/view/Favourite/favourite_shoes.dart';
 
 import '../../../animation/fadeanimation.dart';
 import '../../../models/models.dart';
@@ -20,7 +23,9 @@ class BodyProfile extends StatefulWidget {
 
 class _BodyProfileState extends State<BodyProfile> {
   int statusCurrentIndex = 0;
-  String userName = ''; // Default name for the user
+  String userName = '';
+
+  var userEmail; // Default name for the user
 
   @override
   void initState() {
@@ -34,7 +39,14 @@ class _BodyProfileState extends State<BodyProfile> {
 
   // Fetch the logged-in user's display name
 
-
+  void navigateToFavoriteShoes(BuildContext context, String userEmail) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => FavoriteShoesScreen(userEmail: userEmail),
+      ),
+    );
+  }
   Future<String?> getUserName() async {
     final user = FirebaseAuth.instance.currentUser;
 
@@ -302,36 +314,41 @@ class _BodyProfileState extends State<BodyProfile> {
                 ),
               ),
             ),
-            RoundedLisTile(
-              width: width,
-              height: height,
-              leadingBackColor: Colors.grey[400],
-              icon: Icons.shield,
-              title: "Privacy",
-              trailing: Container(
-                width: 140,
-                height: 30,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(20),
-                  color: Colors.red[500],
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Text(
-                      "Action Needed  ",
-                      style: TextStyle(
-                        color: AppConstantsColor.lightTextColor,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    Icon(
-                      Icons.arrow_forward_ios,
-                      color: AppConstantsColor.lightTextColor,
-                      size: 15,
-                    ),
-                  ],
+            GestureDetector(
+              onTap: (){
+                Get.to(FavoriteShoesScreen(userEmail: userEmail));
+              },
+              child: RoundedLisTile(
+                width: width,
+                height: height,
+                leadingBackColor: Colors.grey[400],
+                icon: Icons.favorite,
+                title: "Favourites",
+                trailing: Container(
+                  width: 140,
+                  height: 30,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(20),
+                    color: Colors.red[500],
+                  ),
+                  // child: Row(
+                  //   mainAxisAlignment: MainAxisAlignment.center,
+                  //   crossAxisAlignment: CrossAxisAlignment.center,
+                  //   children: [
+                  //     Text(
+                  //       "Action Needed  ",
+                  //       style: TextStyle(
+                  //         color: AppConstantsColor.lightTextColor,
+                  //         fontWeight: FontWeight.w500,
+                  //       ),
+                  //     ),
+                  //     Icon(
+                  //       Icons.arrow_forward_ios,
+                  //       color: AppConstantsColor.lightTextColor,
+                  //       size: 15,
+                  //     ),
+                  //   ],
+                  // ),
                 ),
               ),
             ),

@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -18,6 +20,79 @@ class Body extends StatefulWidget {
 }
 
 class _BodyState extends State<Body> {
+  final User? currentUser = FirebaseAuth.instance.currentUser; // Get logged-in user
+// Keep track of the favorite status for each shoe
+  final Map<String, bool> favoritedShoes = {};
+
+
+  void toggleFavorite(ShoeModel shoe) async {
+    final User? currentUser = FirebaseAuth.instance.currentUser;
+    if (currentUser == null) return;
+
+    final String userEmail = currentUser.email!;
+    final favCollection = FirebaseFirestore.instance.collection('favorites');
+
+    // Check if the shoe is already in the favorites collection
+    final favDoc = await favCollection
+        .where('email', isEqualTo: userEmail)
+        .where('name', isEqualTo: shoe.name)
+        .get();
+
+    bool isFavorited = favoritedShoes[shoe.name] ?? false;
+
+    if (favDoc.docs.isNotEmpty) {
+      // If favorited, remove it from Firestore and update locally
+      await favCollection.doc(favDoc.docs.first.id).delete();
+      setState(() {
+        favoritedShoes[shoe.name] = false;
+      });
+    } else {
+      // If not favorited, add it to Firestore and update locally
+      await favCollection.add({
+        'email': userEmail,
+        'name': shoe.name,
+        'model': shoe.model,
+      });
+      setState(() {
+        favoritedShoes[shoe.name] = true;
+      });
+    }
+  }
+
+  bool isFavorited(ShoeModel shoe) {
+    return favoritedShoes[shoe.name] ?? false;
+  }
+
+  // void toggleFavorite(ShoeModel shoe) async {
+  //   if (currentUser == null) return; // Ensure user is logged in
+  //   final String userEmail = currentUser!.email!;
+  //   final favCollection = FirebaseFirestore.instance.collection('favorites');
+  //
+  //   // Check if the shoe is already favorited by this user
+  //   final favDoc = await favCollection
+  //       .where('email', isEqualTo: userEmail)
+  //       .where('name', isEqualTo: shoe.name)
+  //       .get();
+  //
+  //   if (favDoc.docs.isNotEmpty) {
+  //     // Remove from Firestore if already favorited
+  //     await favCollection.doc(favDoc.docs.first.id).delete();
+  //   } else {
+  //     // Add to Firestore if not favorited
+  //     await favCollection.add({
+  //       'email': userEmail,
+  //       'name': shoe.name,
+  //       'model': shoe.model,
+  //     });
+  //   }
+  //
+  //   setState(() {}); // Update UI
+  // }
+
+  // bool iFavorited(ShoeModel shoe) {
+  //   // Implement logic to check Firestore if the shoe is favorited
+  //   return false; // Placeholder logic
+  // }
   int selectedIndexOfCategory = 0;
   int selectedIndexOfFeatured = 1;
   bool isSearching = false;
@@ -229,12 +304,14 @@ class _BodyState extends State<Body> {
                               Text(model.name, style: AppThemes.homeProductName),
                               SizedBox(width: width * 0.3),
                               IconButton(
-                                onPressed: () {},
-                                icon: const Icon(
-                                  Icons.favorite_border,
-                                  color: Colors.white,
+                                onPressed: () => toggleFavorite(model), // Just call toggleFavorite here
+                                icon: Icon(
+                                  isFavorited(model) ? Icons.favorite : Icons.favorite_border,
+                                  color: isFavorited(model) ? Colors.red : Colors.grey, // Red when favorited, grey otherwise
                                 ),
-                              ),
+                              )
+
+
                             ],
                           ),
                         ),
